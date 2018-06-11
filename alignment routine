@@ -1,0 +1,30 @@
+dir = 'D:\scpFILES\From_NJIT\raw_data\ha_update\'
+;fl = file_search(dir+'/*20170906_192*fts', count=n1) + file_search(dir+'/*20170906_193*fts', count=n2)
+fl = file_search(dir+'\*vissr*fts', count=n)
+hom = n
+fits_read, fl[30], data
+s = size(data)
+refer_time=w_maptime('D:\scpFILES\From_NJIT\raw_data\GST\bbso_tio_pcosr_20170906_192135.fts');this is for rot_xy, for rotate time, reference time is 20:31:14
+for i = 0,hom -1 do begin
+  help, i
+  fits_read, fl[i], data, header
+  data_new=data
+  for ic=0, s[1]-1 do begin
+    for ir=0,s[2]-1 do begin
+      if (data[ic,ir] lt 0.) then begin
+        data_new[ic,ir]=fix(32767+ data[ic,ir]/2)
+      endif else data_new[ic,ir]=fix(data[ic,ir]/2)
+    endfor
+  endfor
+  Dtime=w_maptime(fl[i])
+  cur_xy = rot_xy(585.,-226.,Dtime-refer_time)
+  cur_angle =  -((73874 - Dtime)/240.)
+  ar_data = rot(data_new, cur_angle)
+  acx=string(cur_xy[0])
+  acy=string(cur_xy[1])
+  print,acx
+  sxaddpar,header,'CRVAL1',acx
+  sxaddpar,header,'CRVAL2',acy
+  modfits,fl[i],ar_data,header
+endfor
+end
